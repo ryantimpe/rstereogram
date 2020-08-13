@@ -17,6 +17,8 @@ knitr::opts_chunk$set(
 
 Super nascent project to create MagicEye-ish autostereogram based off [this paper](https://www2.cs.sfu.ca/CourseCentral/414/li/material/refs/SIRDS-Computer-94.pdf).
 
+Not yet a package.
+
 ![](magiceye_R.png)
 
 
