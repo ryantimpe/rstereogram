@@ -1,20 +1,6 @@
-# Algorithm for drawing an autostereogram
 
-DPI = 72 #DPI of output device... need to verify
-E = round(2.5 * DPI) # Eye separation is assumed to be 2.5 inches
-mu = 1/3 #Depth of field (fraction of viewing distance)
-
-#Sterop separation corresponding to position Z
-separation <- function(Z){
-  round((1-mu*Z)/ (2-mu*Z) * E)
-}
-
-far = separation(0) #Separation of the far plane when Z=0
 
 img = png::readPNG("demo_r.png")
-# png_file <- system.file("img", "Rlogo.png", package="png")
-# img = png::readPNG(png_file)
-
 
 #PLOT AS MAGIC EYE ----
 ggplot(mpg) + geom_bar(aes(y = class)) + theme_minimal()
@@ -51,91 +37,124 @@ plot(as.raster(img))
 dim(img)
 #Img2 is a matrix of the Z values for this black & white image.
 # Values of 1 are the near-field, 0 are the far field
-img2 <- 1-rowSums(img[,,1:3], dims = 2)/3
-Z <- img2
+img2 <- 1-rowSums(img[,,-4], dims = 2)/3
 
-plot(as.raster(Z))
+
+# plot(as.raster(Z))
 
 use_colors = c("#9affd0", #Aqua
-               # "#ffb5f5", #Pink
+               #"#ffb5f5", #Pink
                "#5384ff", #Blue
                "#ff9e53", #Orange
-               # "#ffed89", #Yellow
-               "#de89ff", #Purple
-               "#ff6141"#, #Red/Orange
+               #"#ffed89", #Yellow
+               #"#de89ff", #Purple
+               #"#ff6141"#, #Red/Orange
 
-               # "#ff25ab" #Bright pink
+              "#ff25ab" #Bright pink
 
 )
-#Scan each line independently
-for(y in 1:maxY){
-  cat("Rendering y = ", y, "\n")
+use_colors = c("#00436b", "#ffed89")
 
-  pix <- rep(0, maxX) #Array of pixel colors for this row
+# Algorithm for drawing an autostereogram
 
-  same <- 1:maxX #Array that points to a pixel to the right...
-  #... that is constrained to be this color
-  # Each pixel is initially linked with itself
-  # Lines 23-24 in paper
+create_magiceye <- function(image, use_colors = c("#00436b", "#ffed89")){
 
-  for(x in 1:maxX){
-    s = separation(Z[y, x])
-    #lines 28 and 29. Using mod to offset odd s
-    # left = x - (s + round((y%%2)*(s%%2)))/2 #Pixels at left and right...
-    left = round(x - s/2) #Pixels at left and right...
-    right = left + s #... must be the same...
+  #Process image
+  img2 <- 1-rowSums(image[,,-4], dims = 2)/3
 
-    #... or must they?
-    if(left > 0 && right < maxX){
-      visible  = TRUE #First perform hidden-surface removal
-      t = 1 #We will check the points (x-t, y) and (x+t, y)
-      zt = 0 #Z-coord of ray at these two points
+  #Algorithm
+  DPI = 72 #DPI of output device... need to verify
+  E = round(2.5 * DPI) # Eye separation is assumed to be 2.5 inches
+  mu = 1/3 #Depth of field (fraction of viewing distance)
 
-      while(visible && zt < 1){
-        zt = Z[y, x] + 2*(2 - mu*Z[y, x]*t/(mu*E))
+  #Sterop separation corresponding to position Z
+  separation <- function(Z){
+    round((1-mu*Z)/ (2-mu*Z) * E)
+  }
 
-        visible = (Z[y, x-t] < zt) && (Z[y, x+t] < zt) #false is obscured
-        t = t+1
-      }
-      #Done with hidden-surface removal
-      #... so record the fact that pixels at
-      # RYAN IS CONFUSED HERE
-      # Paper lines 42-48
-      if(visible){
-        k = same[left]
-        while(k != left && k != right){
-          if(k < right){
-            left <- k
-          } else {
-            left <- right
-            right <- k
-          }
+  far = separation(0) #Separation of the far plane when Z=0
+
+  #Scan each line independently
+  Z <- img2
+  for(y in 1:maxY){
+    pix <- rep(0, maxX) #Array of pixel colors for this row
+
+    same <- 1:maxX #Array that points to a pixel to the right...
+    #... that is constrained to be this color
+    # Each pixel is initially linked with itself
+    # Lines 23-24 in paper
+
+    for(x in 1:maxX){
+      s = separation(Z[y, x])
+      #lines 28 and 29. Using mod to offset odd s
+      # left = x - (s + round((y%%2)*(s%%2)))/2 #Pixels at left and right...
+      left = round(x - s/2) #Pixels at left and right...
+      right = left + s #... must be the same...
+
+      #... or must they?
+      if(left > 0 && right < maxX){
+        visible  = TRUE #First perform hidden-surface removal
+        t = 1 #We will check the points (x-t, y) and (x+t, y)
+        zt = 0 #Z-coord of ray at these two points
+
+        while(visible && zt < 1){
+          zt = Z[y, x] + 2*(2 - mu*Z[y, x]*t/(mu*E))
+
+          visible = (Z[y, x-t] < zt) && (Z[y, x+t] < zt) #false is obscured
+          t = t+1
         }
-        same[left] <- right
+        #Done with hidden-surface removal
+        #... so record the fact that pixels at
+        # RYAN IS CONFUSED HERE
+        # Paper lines 42-48
+        if(visible){
+          k = same[left]
+          while(k != left && k != right){
+            if(k < right){
+              left <- k
+            } else {
+              left <- right
+              right <- k
+            }
+          }
+          same[left] <- right
+        }
       }
     }
-  }
 
-  #Now set the pixels on this scan line
-  for(x in maxX:1){
-    if(same[x] == x){
-      pix[x] <- sample(seq_along(use_colors), 1)
-    } else {
-      pix[x] <- pix[same[x]]
+    #Now set the pixels on this scan line
+    for(x in maxX:1){
+      if(same[x] == x){
+        pix[x] <- sample(seq_along(use_colors), 1)
+      } else {
+        pix[x] <- pix[same[x]]
+      }
+
+      Z[y, x] <- pix[x]
     }
 
-    Z[y, x] <- pix[x]
+
   }
 
+  # plot(as.raster((Z)))
+  #
+  Z2 <- as.character(Z)
+  for(ii in seq_along(use_colors)){
+    Z2 <- replace(Z2,
+                  Z2 == as.character(ii),
+                  use_colors[ii]
+    )
+  }
 
-}
-Z2 <- as.character(Z)
-for(ii in seq_along(use_colors)){
-  Z2 <- replace(Z2,
-         Z2 == as.character(ii),
-         use_colors[ii]
+  out_list <- list(
+    magic_eye = Z2,
+    dims = c(maxY, maxX)
   )
+
+  return(out_list)
+
 }
 
+me1 <- create_magiceye(png::readPNG("demo_r.png"), use_colors)
 
-plot(as.raster(matrix(Z2, nrow = maxY)))
+plot(as.raster(matrix(me1$magic_eye, nrow = me1$dims[1])))
