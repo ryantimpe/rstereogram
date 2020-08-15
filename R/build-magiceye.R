@@ -1,63 +1,27 @@
+#' Convert a 2D image to a 3D autostereogram
+#'
+#' Convert a 2D greyscale image to a 3D autostereogram. Set dot colors used in final image.
+#'
+#' @param image Matrix image, usually from \code{png::readPNG()} or \code{jpeg::readJPEG()}.
+#' @param use_colors Array of at least 2 color hex codes. Colors should be visually distinct and avoid using too many.
+#' @return A raster matrix for \code{plot()}.
+#' @export
+#' @examples
+#' # Import a jpeg or png
+#'  demo_file <- system.file("extdata", "demo_img.jpg",
+#'                           package = "rstereogram", mustWork = TRUE)
+#'  demo_image <- jpeg::readJPEG(demo_file)
+#'
+#'  mosaic <- demo_image %>%
+#'     image_to_mosaic()
+#'
 
+image_to_magiceye <- function(image, use_colors = c("#00436b", "#ffed89")){
 
-img = png::readPNG("demo_r.png")
-
-#PLOT AS MAGIC EYE ----
-ggplot(mpg) + geom_bar(aes(y = class)) + theme_minimal()
-
-f <- file.path(tempdir(), "magiceye.png")
-ggsave(f, width = 4, height = 4, units = "in", dpi = 72)
-
-img = png::readPNG(f)
-
-# TEXT AS MAGIC EYE ----
-text = "TIMPE"
-ggplot(data.frame(x=c(1), y=c(1), label=text)) +
-  geom_text(aes(x, y, label=label), size = 40, fontface = "bold") +
-  theme_void()
-
-ggsave(f, width = 6, height = 4, units = "in", dpi = 72)
-
-img = png::readPNG(f)
-
-#image and object size
-# Columns are the 2nd coordinate, which is x
-maxX = dim(img)[2]
-maxY = dim(img)[1]
-
-plot(as.raster(img))
-
-#Magic Eye function
-# LIne 13 in paper
-
-#Object's dept is Z[x][y], which is between 0 and 1
-# 0 is on the far plane, 1 is on the near plane
-# x and y are coordinates of current point
-
-dim(img)
-#Img2 is a matrix of the Z values for this black & white image.
-# Values of 1 are the near-field, 0 are the far field
-img2 <- 1-rowSums(img[,,-4], dims = 2)/3
-
-
-# plot(as.raster(Z))
-
-use_colors = c("#9affd0", #Aqua
-               #"#ffb5f5", #Pink
-               "#5384ff", #Blue
-               "#ff9e53", #Orange
-               #"#ffed89", #Yellow
-               #"#de89ff", #Purple
-               #"#ff6141"#, #Red/Orange
-
-              "#ff25ab" #Bright pink
-
-)
-use_colors = c("#00436b", "#ffed89")
-
-# Algorithm for drawing an autostereogram
-
-create_magiceye <- function(image, use_colors = c("#00436b", "#ffed89")){
+  #image and object size
+  # Columns are the 2nd coordinate, which is x
+  maxX = dim(image)[2]
+  maxY = dim(image)[1]
 
   #Process image
   img2 <- 1-rowSums(image[,,-4], dims = 2)/3
@@ -67,12 +31,11 @@ create_magiceye <- function(image, use_colors = c("#00436b", "#ffed89")){
   E = round(2.5 * DPI) # Eye separation is assumed to be 2.5 inches
   mu = 1/3 #Depth of field (fraction of viewing distance)
 
-  #Sterop separation corresponding to position Z
+  #Stereo separation corresponding to position Z
   separation <- function(Z){
     round((1-mu*Z)/ (2-mu*Z) * E)
   }
-
-  far = separation(0) #Separation of the far plane when Z=0
+  #Far plane = separation(0); near plane = separation(1)
 
   #Scan each line independently
   Z <- img2
@@ -100,12 +63,10 @@ create_magiceye <- function(image, use_colors = c("#00436b", "#ffed89")){
         while(visible && zt < 1){
           zt = Z[y, x] + 2*(2 - mu*Z[y, x]*t/(mu*E))
 
-          visible = (Z[y, x-t] < zt) && (Z[y, x+t] < zt) #false is obscured
+          visible = (Z[y, x-t] < zt) && (Z[y, x+t] < zt) #false if obscured
           t = t+1
         }
         #Done with hidden-surface removal
-        #... so record the fact that pixels at
-        # RYAN IS CONFUSED HERE
         # Paper lines 42-48
         if(visible){
           k = same[left]
@@ -132,12 +93,9 @@ create_magiceye <- function(image, use_colors = c("#00436b", "#ffed89")){
 
       Z[y, x] <- pix[x]
     }
-
-
   }
 
-  # plot(as.raster((Z)))
-  #
+  #Convert numbers into colors
   Z2 <- as.character(Z)
   for(ii in seq_along(use_colors)){
     Z2 <- replace(Z2,
@@ -146,15 +104,17 @@ create_magiceye <- function(image, use_colors = c("#00436b", "#ffed89")){
     )
   }
 
-  out_list <- list(
-    magic_eye = Z2,
-    dims = c(maxY, maxX)
-  )
-
-  return(out_list)
+  # out_list <- list(
+  #   magic_eye = Z2,
+  #   dims = c(maxY, maxX)
+  # )
+  #
+  # return(out_list)
+  return(as.raster(matrix(Z2, nrow = maxY)))
 
 }
 
-me1 <- create_magiceye(png::readPNG("demo_r.png"), use_colors)
+png::readPNG("demo_r.png") %>% image_to_magiceye() %>% plot()
 
-plot(as.raster(matrix(me1$magic_eye, nrow = me1$dims[1])))
+png::readPNG("demo_whoops.png") %>%
+  image_to_magiceye(use_colors = c("#FFFFFF", "#3399FF", "#FF9911")) %>% plot()

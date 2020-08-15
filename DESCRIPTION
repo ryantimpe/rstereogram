@@ -1,12 +1,15 @@
-Package: MagicEye
+Package: rstereogram
 Type: Package
 Title: Generate autostereogram 3D images
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Authors@R: 
+    person(given = "Ryan",
+           family = "Timpe",
+           role = c("aut", "cre"),
+           email = "ryan.timpe@gmail.com")
+Description: Create 3D autostereogam images from an input image. 
+    Select colors of dot pattern. Convert plots to 3D.
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 URL: https://github.com/ryantimpe/MagicEye
