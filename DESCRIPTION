@@ -14,3 +14,13 @@ Encoding: UTF-8
 LazyData: true
 URL: https://github.com/ryantimpe/MagicEye
 BugReports: https://github.com/ryantimpe/MagicEye/issues
+Suggests: 
+    ggplot2,
+    rphylopic
+Imports: 
+    png,
+    magrittr,
+    abind
+RoxygenNote: 7.1.1
+Depends: 
+    R (>= 2.10)

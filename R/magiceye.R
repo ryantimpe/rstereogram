@@ -3,20 +3,22 @@
 #' Convert a 2D greyscale image to a 3D autostereogram. Set dot colors used in final image.
 #'
 #' @param image Matrix image, usually from \code{png::readPNG()} or \code{jpeg::readJPEG()}.
-#' @param use_colors Array of at least 2 color hex codes. Colors should be visually distinct and avoid using too many.
+#' @param colors Array of at least 2 color hex codes. Colors should be visually distinct and avoid using too many.
+#' @param alpha_only Logical. Set to TRUE to only consider alpha channel of a png when rendering image.
 #' @return A raster matrix for \code{plot()}.
 #' @export
 #' @examples
 #' # Import a jpeg or png
-#'  demo_file <- system.file("extdata", "demo_img.jpg",
+#'  demo_file <- system.file("extdata", "demo_r.png",
 #'                           package = "rstereogram", mustWork = TRUE)
-#'  demo_image <- jpeg::readJPEG(demo_file)
+#'  demo_image <- png::readPNG(demo_file)
 #'
-#'  mosaic <- demo_image %>%
-#'     image_to_mosaic()
+#'  demo_image %>%
+#'     image_to_magiceye() %>%
+#'     plot()
 #'
 
-image_to_magiceye <- function(image, use_colors = c("#00436b", "#ffed89")){
+image_to_magiceye <- function(image, colors = c("#00436b", "#ffed89"), alpha_only = F){
 
   #image and object size
   # Columns are the 2nd coordinate, which is x
@@ -24,7 +26,11 @@ image_to_magiceye <- function(image, use_colors = c("#00436b", "#ffed89")){
   maxY = dim(image)[1]
 
   #Process image
-  img2 <- 1-rowSums(image[,,-4], dims = 2)/3
+  if(alpha_only){
+    img2 <- image[,,4]
+  } else{
+    img2 <- 1-rowSums(image[,,-4], dims = 2)/3
+  }
 
   #Algorithm
   DPI = 72 #DPI of output device... need to verify
@@ -86,7 +92,7 @@ image_to_magiceye <- function(image, use_colors = c("#00436b", "#ffed89")){
     #Now set the pixels on this scan line
     for(x in maxX:1){
       if(same[x] == x){
-        pix[x] <- sample(seq_along(use_colors), 1)
+        pix[x] <- sample(seq_along(colors), 1)
       } else {
         pix[x] <- pix[same[x]]
       }
@@ -97,10 +103,10 @@ image_to_magiceye <- function(image, use_colors = c("#00436b", "#ffed89")){
 
   #Convert numbers into colors
   Z2 <- as.character(Z)
-  for(ii in seq_along(use_colors)){
+  for(ii in seq_along(colors)){
     Z2 <- replace(Z2,
                   Z2 == as.character(ii),
-                  use_colors[ii]
+                  colors[ii]
     )
   }
 
@@ -110,11 +116,6 @@ image_to_magiceye <- function(image, use_colors = c("#00436b", "#ffed89")){
   # )
   #
   # return(out_list)
-  return(as.raster(matrix(Z2, nrow = maxY)))
+  return(grDevices::as.raster(matrix(Z2, nrow = maxY)))
 
 }
-
-png::readPNG("demo_r.png") %>% image_to_magiceye() %>% plot()
-
-png::readPNG("demo_whoops.png") %>%
-  image_to_magiceye(use_colors = c("#FFFFFF", "#3399FF", "#FF9911")) %>% plot()
