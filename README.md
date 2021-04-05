@@ -45,6 +45,21 @@ Supply your own list of hex color codes with the `colors` input. You can
 use as many colors as you’d like, but I’ve found the images are easier
 to see with fewer, high contrast colors.
 
+Alternatively, use `ggmagiceye()` instead of `plot()` to return a ggplot
+object instead of a raster matrix.
+
+``` r
+demo_file <- system.file("extdata", "demo_pig.png",
+                         package = "rstereogram", mustWork = TRUE)
+demo_image <- png::readPNG(demo_file)
+
+demo_image %>%
+  image_to_magiceye(colors = c("#ffffff", "#111111", "#999922")) %>%
+  ggmagiceye()
+```
+
+<img src="man/figures/README-imagegg-1.png" width="100%" />
+
 ### Tips on how to see 3D images
 
   - [MagicEye.com](https://www.magiceye.com/avada_faq/help-how-do-i-see-in-3d/)
@@ -55,9 +70,10 @@ to see with fewer, high contrast colors.
 ``` r
 list.files("inst/extdata")
 #> [1] "demo_circle.png"         "demo_hemi.png"          
-#> [3] "demo_r.png"              "demo_shapes.png"        
-#> [5] "demo_stackedcircles.png" "demo_star.png"          
-#> [7] "demo_triangles.png"
+#> [3] "demo_pig.png"            "demo_pig2.PNG"          
+#> [5] "demo_r.png"              "demo_shapes.png"        
+#> [7] "demo_stackedcircles.png" "demo_star.png"          
+#> [9] "demo_triangles.png"
 ```
 
 ## 3D ggplots
