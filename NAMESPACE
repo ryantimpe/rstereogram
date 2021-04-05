@@ -2,6 +2,7 @@
 
 export("%>%")
 export(dino_to_magiceye)
+export(ggmagiceye)
 export(ggplot_to_magiceye)
 export(image_to_magiceye)
 importFrom(magrittr,"%>%")

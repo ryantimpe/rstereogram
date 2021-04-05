@@ -1,7 +1,7 @@
 Package: rstereogram
 Type: Package
 Title: Generate autostereogram 3D images
-Version: 0.1.0
+Version: 0.1.2
 Authors@R: 
     person(given = "Ryan",
            family = "Timpe",
@@ -16,7 +16,10 @@ URL: https://github.com/ryantimpe/MagicEye
 BugReports: https://github.com/ryantimpe/MagicEye/issues
 Suggests: 
     ggplot2,
-    rphylopic
+    rphylopic,
+    stringr,
+    dplyr,
+    tidyr
 Imports: 
     png,
     magrittr,
