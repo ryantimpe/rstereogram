@@ -55,7 +55,9 @@ demo_image <- png::readPNG(demo_file)
 
 demo_image %>%
   image_to_magiceye(colors = c("#ffffff", "#111111", "#999922")) %>%
-  ggmagiceye()
+  ggmagiceye() +
+  ggplot2::annotate("text", label = "Add ggplot2 features\nto your MagicEyes!", color = "#0000aa", 
+           x = 300, y = 400, size = 14, fontface=2) 
 ```
 
 <img src="man/figures/README-imagegg-1.png" width="100%" />
